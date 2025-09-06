@@ -22,13 +22,13 @@ const mapOptions = {
   fullscreenControl: false,
 };
 
-// Placeholder heatmap data
-const heatmapData = [
-  new google.maps.LatLng(28.6139, 77.2090),
-  new google.maps.LatLng(28.6149, 77.2100),
-  new google.maps.LatLng(28.6129, 77.2080),
-  new google.maps.LatLng(28.6159, 77.2110),
-  new google.maps.LatLng(28.6119, 77.2070),
+// Placeholder heatmap coordinates
+const heatmapCoordinates = [
+  { lat: 28.6139, lng: 77.2090 },
+  { lat: 28.6149, lng: 77.2100 },
+  { lat: 28.6129, lng: 77.2080 },
+  { lat: 28.6159, lng: 77.2110 },
+  { lat: 28.6119, lng: 77.2070 },
 ];
 
 interface GoogleMapComponentProps {
@@ -39,10 +39,16 @@ const GoogleMapComponent = ({ onLocationSelect }: GoogleMapComponentProps) => {
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [markers, setMarkers] = useState([center]);
   const [searchBox, setSearchBox] = useState<google.maps.places.SearchBox | null>(null);
+  const [heatmapData, setHeatmapData] = useState<google.maps.LatLng[]>([]);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const onLoad = useCallback((map: google.maps.Map) => {
     setMap(map);
+    // Create heatmap data after Google Maps API is loaded
+    const heatmapPoints = heatmapCoordinates.map(coord => 
+      new google.maps.LatLng(coord.lat, coord.lng)
+    );
+    setHeatmapData(heatmapPoints);
   }, []);
 
   const onUnmount = useCallback(() => {
@@ -136,30 +142,32 @@ const GoogleMapComponent = ({ onLocationSelect }: GoogleMapComponentProps) => {
             />
           ))}
 
-          {/* Heatmap Layer */}
-          <HeatmapLayer
-            data={heatmapData}
-            options={{
-              radius: 50,
-              opacity: 0.6,
-              gradient: [
-                "rgba(0, 255, 255, 0)",
-                "rgba(0, 255, 255, 1)",
-                "rgba(0, 191, 255, 1)",
-                "rgba(0, 127, 255, 1)",
-                "rgba(0, 63, 255, 1)",
-                "rgba(0, 0, 255, 1)",
-                "rgba(0, 0, 223, 1)",
-                "rgba(0, 0, 191, 1)",
-                "rgba(0, 0, 159, 1)",
-                "rgba(0, 0, 127, 1)",
-                "rgba(63, 0, 91, 1)",
-                "rgba(127, 0, 63, 1)",
-                "rgba(191, 0, 31, 1)",
-                "rgba(255, 0, 0, 1)"
-              ]
-            }}
-          />
+          {/* Heatmap Layer - only render when data is available */}
+          {heatmapData.length > 0 && (
+            <HeatmapLayer
+              data={heatmapData}
+              options={{
+                radius: 50,
+                opacity: 0.6,
+                gradient: [
+                  "rgba(0, 255, 255, 0)",
+                  "rgba(0, 255, 255, 1)",
+                  "rgba(0, 191, 255, 1)",
+                  "rgba(0, 127, 255, 1)",
+                  "rgba(0, 63, 255, 1)",
+                  "rgba(0, 0, 255, 1)",
+                  "rgba(0, 0, 223, 1)",
+                  "rgba(0, 0, 191, 1)",
+                  "rgba(0, 0, 159, 1)",
+                  "rgba(0, 0, 127, 1)",
+                  "rgba(63, 0, 91, 1)",
+                  "rgba(127, 0, 63, 1)",
+                  "rgba(191, 0, 31, 1)",
+                  "rgba(255, 0, 0, 1)"
+                ]
+              }}
+            />
+          )}
         </GoogleMap>
       </div>
     </LoadScript>
