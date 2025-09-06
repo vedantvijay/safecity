@@ -52,16 +52,27 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
-				sidebar: {
-					DEFAULT: 'hsl(var(--sidebar-background))',
-					foreground: 'hsl(var(--sidebar-foreground))',
-					primary: 'hsl(var(--sidebar-primary))',
-					'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
-					accent: 'hsl(var(--sidebar-accent))',
-					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
-					border: 'hsl(var(--sidebar-border))',
-					ring: 'hsl(var(--sidebar-ring))'
-				}
+				// SafeCity specific colors
+				'safety-blue': 'hsl(var(--safety-blue))',
+				'safety-blue-dark': 'hsl(var(--safety-blue-dark))',
+				'danger-red': 'hsl(var(--danger-red))',
+				'danger-red-dark': 'hsl(var(--danger-red-dark))',
+				'warning-yellow': 'hsl(var(--warning-yellow))',
+				'success-green': 'hsl(var(--success-green))'
+			},
+			backgroundImage: {
+				'gradient-primary': 'var(--gradient-primary)',
+				'gradient-danger': 'var(--gradient-danger)',
+				'gradient-dark': 'var(--gradient-dark)'
+			},
+			boxShadow: {
+				'soft': 'var(--shadow-soft)',
+				'glow': 'var(--shadow-glow)',
+				'danger': 'var(--shadow-danger)'
+			},
+			transitionTimingFunction: {
+				'smooth': 'var(--transition-smooth)',
+				'bounce': 'var(--transition-bounce)'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
