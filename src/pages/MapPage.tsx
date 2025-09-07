@@ -1,15 +1,54 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import GoogleMapComponent from "@/components/GoogleMap";
-import ChatBox from "@/components/ChatBox";
+import SimpleChatbot from "@/components/SimpleChatbot";
 import SOSButton from "@/components/SOSButton";
 
 const MapPage = () => {
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [mapLocations, setMapLocations] = useState<{
+    start: { lat: number; lng: number; address?: string } | null;
+    destination: { lat: number; lng: number; address?: string } | null;
+  }>({
+    start: null,
+    destination: null
+  });
 
   const handleLocationSelect = (location: { lat: number; lng: number }) => {
     setSelectedLocation(location);
     console.log("Location selected:", location);
+  };
+
+  const handleMapLocationsChange = (locations: {
+    start: { lat: number; lng: number; address?: string } | null;
+    destination: { lat: number; lng: number; address?: string } | null;
+  }) => {
+    setMapLocations(locations);
+    console.log("Map locations updated:", locations);
+  };
+
+  const [routeTypes, setRouteTypes] = useState<string[]>([]);
+
+  const handleRouteTypesChange = (types: string[]) => {
+    setRouteTypes(types);
+    console.log("Route types updated:", types);
+  };
+
+  const [routeRequest, setRouteRequest] = useState<{
+    prioritizePoliceStations?: boolean;
+    prioritizeLighting?: boolean;
+    avoidHighCrimeAreas?: boolean;
+    timeOfDay?: string;
+  } | null>(null);
+
+  const handleRouteRequest = (routePreferences: {
+    prioritizePoliceStations?: boolean;
+    prioritizeLighting?: boolean;
+    avoidHighCrimeAreas?: boolean;
+    timeOfDay?: string;
+  }) => {
+    console.log("Route request from chatbot:", routePreferences);
+    setRouteRequest(routePreferences);
   };
 
   return (
@@ -34,8 +73,14 @@ const MapPage = () => {
           {/* Map and Chat Layout */}
           <div className="h-[calc(100%-120px)] grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Map Section */}
-            <div className="lg:col-span-2 relative">
-              <GoogleMapComponent onLocationSelect={handleLocationSelect} />
+            <div className="lg:col-span-2 relative h-full min-h-[500px]">
+              <GoogleMapComponent 
+                onLocationSelect={handleLocationSelect} 
+                onLocationsChange={handleMapLocationsChange}
+                routeRequest={routeRequest}
+                onRouteRequestComplete={() => setRouteRequest(null)}
+                onRouteTypesChange={handleRouteTypesChange}
+              />
               
               {/* Location Info Overlay */}
               {selectedLocation && (
@@ -59,7 +104,11 @@ const MapPage = () => {
 
             {/* Chat Section */}
             <div className="lg:col-span-1 min-h-[400px] lg:min-h-full">
-              <ChatBox />
+              <SimpleChatbot 
+                mapLocations={mapLocations} 
+                onRouteRequest={handleRouteRequest}
+                routeTypes={routeTypes}
+              />
             </div>
           </div>
 

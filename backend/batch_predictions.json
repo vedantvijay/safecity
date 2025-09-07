@@ -1,0 +1,59 @@
+[
+  {
+    "location": {
+      "name": "Marina Beach",
+      "latitude": 13.0479,
+      "longitude": 80.2827,
+      "hour": 18,
+      "month": 6,
+      "cctv_present": 1,
+      "lighting": "Good",
+      "police_distance_km": 0.5,
+      "safety_score": 7.0
+    },
+    "prediction": {
+      "predicted_crime_count": 201.35,
+      "high_risk_probability": 11.0,
+      "risk_level": "LOW",
+      "safety_recommendation": "\u2705 Relatively safe area"
+    }
+  },
+  {
+    "location": {
+      "name": "T. Nagar Market",
+      "latitude": 13.0418,
+      "longitude": 80.2341,
+      "hour": 20,
+      "month": 12,
+      "cctv_present": 0,
+      "lighting": "Poor",
+      "police_distance_km": 2.0,
+      "safety_score": 4.0
+    },
+    "prediction": {
+      "predicted_crime_count": 201.27,
+      "high_risk_probability": 14.0,
+      "risk_level": "LOW",
+      "safety_recommendation": "\u2705 Relatively safe area | \ud83d\udcf9 No CCTV detected - Stay alert | \ud83d\udca1 Poor lighting - Avoid after dark"
+    }
+  },
+  {
+    "location": {
+      "name": "Chennai Central",
+      "latitude": 13.0827,
+      "longitude": 80.2707,
+      "hour": 22,
+      "month": 3,
+      "cctv_present": 1,
+      "lighting": "Good",
+      "police_distance_km": 0.2,
+      "safety_score": 6.0
+    },
+    "prediction": {
+      "predicted_crime_count": 201.48,
+      "high_risk_probability": 11.0,
+      "risk_level": "LOW",
+      "safety_recommendation": "\u2705 Relatively safe area"
+    }
+  }
+]
