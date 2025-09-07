@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emergency Contacts Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .success { color: green; }
+        .error { color: red; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        input { padding: 8px; margin: 5px; width: 200px; }
+    </style>
+</head>
+<body>
+    <h1>Emergency Contacts Test</h1>
+    
+    <div class="test-section">
+        <h3>Test LocalStorage Functions</h3>
+        <button onclick="testSaveContacts()">Save Test Contacts</button>
+        <button onclick="testLoadContacts()">Load Contacts</button>
+        <button onclick="testClearContacts()">Clear Contacts</button>
+        <div id="test-results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Add Test Contact</h3>
+        <input type="text" id="contact-name" placeholder="Contact Name" value="Test Contact">
+        <input type="email" id="contact-email" placeholder="Contact Email" value="test@example.com">
+        <input type="tel" id="contact-phone" placeholder="Contact Phone" value="+91-9876543210">
+        <input type="text" id="contact-relationship" placeholder="Relationship" value="Friend">
+        <button onclick="addTestContact()">Add Contact</button>
+    </div>
+    
+    <div class="test-section">
+        <h3>Current Contacts</h3>
+        <div id="contacts-display"></div>
+    </div>
+
+    <script>
+        function testSaveContacts() {
+            const testContacts = [
+                {
+                    name: "Emergency Contact 1",
+                    phone: "+91-9876543210",
+                    email: "emergency1@example.com",
+                    relationship: "Family"
+                },
+                {
+                    name: "Emergency Contact 2", 
+                    phone: "+91-9876543211",
+                    email: "emergency2@example.com",
+                    relationship: "Friend"
+                }
+            ];
+            
+            const testUserInfo = {
+                name: "Test User",
+                email: "testuser@safecity.com",
+                phone: "+91-9876543210"
+            };
+            
+            localStorage.setItem('emergencyContacts', JSON.stringify(testContacts));
+            localStorage.setItem('userInfo', JSON.stringify(testUserInfo));
+            
+            document.getElementById('test-results').innerHTML = 
+                '<div class="success">✅ Test contacts saved to localStorage</div>';
+            
+            displayContacts();
+        }
+        
+        function testLoadContacts() {
+            const contacts = localStorage.getItem('emergencyContacts');
+            const userInfo = localStorage.getItem('userInfo');
+            
+            if (contacts && userInfo) {
+                document.getElementById('test-results').innerHTML = 
+                    '<div class="success">✅ Contacts loaded successfully</div>' +
+                    '<pre>' + JSON.stringify(JSON.parse(contacts), null, 2) + '</pre>';
+            } else {
+                document.getElementById('test-results').innerHTML = 
+                    '<div class="error">❌ No contacts found in localStorage</div>';
+            }
+        }
+        
+        function testClearContacts() {
+            localStorage.removeItem('emergencyContacts');
+            localStorage.removeItem('userInfo');
+            document.getElementById('test-results').innerHTML = 
+                '<div class="success">✅ Contacts cleared from localStorage</div>';
+            displayContacts();
+        }
+        
+        function addTestContact() {
+            const name = document.getElementById('contact-name').value;
+            const email = document.getElementById('contact-email').value;
+            const phone = document.getElementById('contact-phone').value;
+            const relationship = document.getElementById('contact-relationship').value;
+            
+            if (!name || !email) {
+                alert('Name and email are required');
+                return;
+            }
+            
+            const contacts = JSON.parse(localStorage.getItem('emergencyContacts') || '[]');
+            contacts.push({ name, email, phone, relationship });
+            
+            localStorage.setItem('emergencyContacts', JSON.stringify(contacts));
+            
+            document.getElementById('test-results').innerHTML = 
+                '<div class="success">✅ Contact added successfully</div>';
+            
+            displayContacts();
+        }
+        
+        function displayContacts() {
+            const contacts = JSON.parse(localStorage.getItem('emergencyContacts') || '[]');
+            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            
+            let html = '<h4>User Info:</h4>';
+            html += `<div>Name: ${userInfo.name || 'Not set'}</div>`;
+            html += `<div>Email: ${userInfo.email || 'Not set'}</div>`;
+            html += `<div>Phone: ${userInfo.phone || 'Not set'}</div>`;
+            
+            html += '<h4>Emergency Contacts:</h4>';
+            if (contacts.length === 0) {
+                html += '<div>No contacts found</div>';
+            } else {
+                contacts.forEach((contact, index) => {
+                    html += `<div style="margin: 10px 0; padding: 10px; background: #f5f5f5; border-radius: 5px;">`;
+                    html += `<strong>${contact.name}</strong><br>`;
+                    html += `Email: ${contact.email}<br>`;
+                    html += `Phone: ${contact.phone}<br>`;
+                    html += `Relationship: ${contact.relationship}`;
+                    html += `</div>`;
+                });
+            }
+            
+            document.getElementById('contacts-display').innerHTML = html;
+        }
+        
+        // Load contacts on page load
+        window.onload = function() {
+            displayContacts();
+        };
+    </script>
+</body>
+</html>

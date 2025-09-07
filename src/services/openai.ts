@@ -29,8 +29,9 @@ export class OpenAIService {
 
   constructor() {
     this.apiKey = import.meta.env.VITE_OPENAI_API_KEY;
-    if (!this.apiKey) {
-      throw new Error('OpenAI API key not found. Please check your environment variables.');
+    if (!this.apiKey || this.apiKey === 'your_openai_api_key_here') {
+      console.warn('OpenAI API key not configured. Chat functionality will be limited.');
+      this.apiKey = '';
     }
   }
 
@@ -38,6 +39,10 @@ export class OpenAIService {
     messages: ChatMessage[],
     onStream?: (chunk: string) => void
   ): Promise<string> {
+    if (!this.apiKey) {
+      return this.getFallbackResponse(messages);
+    }
+    
     try {
       const response = await fetch(this.baseUrl, {
         method: 'POST',
@@ -111,6 +116,21 @@ Always be helpful, informative, and prioritize user safety. Keep responses conci
     onComplete: () => void,
     onError: (error: Error) => void
   ): Promise<void> {
+    if (!this.apiKey) {
+      const fallbackResponse = this.getFallbackResponse(messages);
+      // Simulate streaming by sending chunks
+      const words = fallbackResponse.split(' ');
+      for (let i = 0; i < words.length; i++) {
+        setTimeout(() => {
+          onChunk(words[i] + ' ');
+          if (i === words.length - 1) {
+            onComplete();
+          }
+        }, i * 50);
+      }
+      return;
+    }
+    
     try {
       const response = await fetch(this.baseUrl, {
         method: 'POST',
@@ -363,6 +383,64 @@ Make it educational and actionable for the user.`
     ];
 
     return this.sendMessage(messages);
+  }
+
+  /**
+   * Fallback response when OpenAI API key is not configured
+   */
+  private getFallbackResponse(messages: ChatMessage[]): string {
+    const lastMessage = messages[messages.length - 1]?.content.toLowerCase() || '';
+    
+    if (lastMessage.includes('crime') || lastMessage.includes('safety') || lastMessage.includes('risk')) {
+      return `🚨 SafeCity Assistant (Demo Mode)
+
+I'm currently running in demo mode without OpenAI integration. Here's what I can help you with:
+
+📊 **Crime Prediction Analysis**: Our ML model can analyze crime patterns based on location, time, and environmental factors.
+
+🛡️ **Safety Recommendations**: 
+- Stay in well-lit areas, especially at night
+- Avoid isolated locations
+- Keep emergency contacts handy
+- Trust your instincts
+
+📍 **Location Safety**: Use our interactive map to check crime predictions for different areas.
+
+⚠️ **Emergency**: If you're in immediate danger, call your local emergency number (100 in India).
+
+To enable full AI assistance, please configure your OpenAI API key in the environment variables.`;
+    }
+    
+    if (lastMessage.includes('route') || lastMessage.includes('directions')) {
+      return `🗺️ Route Safety Analysis (Demo Mode)
+
+I can help you plan safer routes using our ML model:
+
+✅ **Safe Route Planning**: 
+- Use our map to check crime predictions along your route
+- Avoid high-risk areas identified by our ML model
+- Choose well-lit streets with good visibility
+
+🚔 **Police Proximity**: Routes near police stations are generally safer
+
+💡 **Lighting**: Well-lit areas reduce crime risk significantly
+
+To get AI-powered route suggestions, please configure your OpenAI API key.`;
+    }
+    
+    return `👋 SafeCity Assistant (Demo Mode)
+
+I'm here to help with urban safety and crime prediction! Currently running in demo mode.
+
+🔧 **Available Features**:
+- Interactive crime prediction map
+- ML-powered safety analysis
+- Emergency SOS functionality
+- Community safety reports
+
+📝 **To enable full AI assistance**: Configure your OpenAI API key in the environment variables.
+
+How can I help you stay safe today?`;
   }
 }
 

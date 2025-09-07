@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, User, Tag, FileText } from 'lucide-react';
+import { X, Send, User, Tag, FileText, MapPin, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
 import { CreateDiscussionRequest } from '@/api/community';
+import { toast } from 'sonner';
 
 interface CreateDiscussionModalProps {
   isOpen: boolean;
@@ -21,14 +23,19 @@ const CreateDiscussionModal: React.FC<CreateDiscussionModalProps> = ({
   onSubmit,
   isLoading = false,
 }) => {
-  const [formData, setFormData] = useState<CreateDiscussionRequest>({
+  const [formData, setFormData] = useState<CreateDiscussionRequest & { latitude?: number; longitude?: number }>({
     title: '',
     content: '',
     category: '',
     author: '',
+    latitude: undefined,
+    longitude: undefined,
   });
 
   const [errors, setErrors] = useState<Partial<CreateDiscussionRequest>>({});
+  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [moderationResult, setModerationResult] = useState<any>(null);
 
   const categories = [
     { value: 'safety', label: 'Safety', icon: '🛡️' },
@@ -56,15 +63,80 @@ const CreateDiscussionModal: React.FC<CreateDiscussionModalProps> = ({
   };
 
   const handleClose = () => {
-    setFormData({ title: '', content: '', category: '', author: '' });
+    setFormData({ title: '', content: '', category: '', author: '', latitude: undefined, longitude: undefined });
     setErrors({});
+    setLocation(null);
+    setModerationResult(null);
     onClose();
+  };
+
+  const getCurrentLocation = async () => {
+    setIsGettingLocation(true);
+    try {
+      if (!navigator.geolocation) {
+        toast.error('Geolocation is not supported by this browser');
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const coords = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          setLocation(coords);
+          setFormData(prev => ({
+            ...prev,
+            latitude: coords.lat,
+            longitude: coords.lng
+          }));
+          toast.success('Location added to your post');
+        },
+        (error) => {
+          toast.error('Failed to get location');
+          console.error('Geolocation error:', error);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 300000,
+        }
+      );
+    } finally {
+      setIsGettingLocation(false);
+    }
+  };
+
+  const checkContentModeration = async (content: string) => {
+    if (!content.trim()) return;
+    
+    try {
+      // Simulate moderation check (in real app, this would call the backend)
+      const response = await fetch('/api/moderate-content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content, type: 'discussion' })
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        setModerationResult(result);
+      }
+    } catch (error) {
+      console.log('Moderation check failed:', error);
+      // Continue without moderation result
+    }
   };
 
   const handleInputChange = (field: keyof CreateDiscussionRequest, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
+    }
+    
+    // Check moderation for content changes
+    if (field === 'content' && value.length > 20) {
+      checkContentModeration(value);
     }
   };
 
@@ -147,6 +219,34 @@ const CreateDiscussionModal: React.FC<CreateDiscussionModalProps> = ({
                 )}
               </div>
 
+              {/* Location */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">
+                  Location (Optional)
+                </label>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={getCurrentLocation}
+                    disabled={isGettingLocation}
+                    className="flex items-center space-x-2"
+                  >
+                    <MapPin className="h-4 w-4" />
+                    <span>{isGettingLocation ? 'Getting...' : 'Add Location'}</span>
+                  </Button>
+                  {location && (
+                    <Badge variant="outline" className="text-xs">
+                      📍 {location.lat.toFixed(4)}, {location.lng.toFixed(4)}
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Adding your location helps other community members understand the context of your post.
+                </p>
+              </div>
+
               {/* Content */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">
@@ -161,6 +261,43 @@ const CreateDiscussionModal: React.FC<CreateDiscussionModalProps> = ({
                 />
                 {errors.content && (
                   <p className="text-sm text-red-500">{errors.content}</p>
+                )}
+                
+                {/* Moderation Result */}
+                {moderationResult && (
+                  <div className={`p-3 rounded-lg border ${
+                    moderationResult.is_safe 
+                      ? 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800' 
+                      : 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800'
+                  }`}>
+                    <div className="flex items-center space-x-2">
+                      <Brain className={`h-4 w-4 ${
+                        moderationResult.is_safe ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+                      }`} />
+                      <span className={`text-sm font-medium ${
+                        moderationResult.is_safe ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'
+                      }`}>
+                        {moderationResult.is_safe ? 'Content looks good!' : 'Content needs review'}
+                      </span>
+                    </div>
+                    {moderationResult.reasoning && (
+                      <p className={`text-xs mt-1 ${
+                        moderationResult.is_safe ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+                      }`}>
+                        {moderationResult.reasoning}
+                      </p>
+                    )}
+                    {moderationResult.suggestions && moderationResult.suggestions.length > 0 && (
+                      <div className="mt-2">
+                        <p className="text-xs font-medium text-red-700 dark:text-red-300">Suggestions:</p>
+                        <ul className="text-xs text-red-600 dark:text-red-400 mt-1">
+                          {moderationResult.suggestions.map((suggestion: string, index: number) => (
+                            <li key={index}>• {suggestion}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
 

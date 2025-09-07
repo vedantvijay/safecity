@@ -161,9 +161,107 @@ export const communityApi = {
       riskScore: number;
       topCrimeTypes: string[];
       safetyRecommendations: string[];
+      timePatterns?: any;
+      aiConfidence?: number;
     };
   }> => {
     const response = await api.get(`/community/ai-analysis?lat=${latitude}&lng=${longitude}&radius=${radius || 5}`);
+    return response.data;
+  },
+
+  // Analyze route safety between two points using ChatGPT API
+  analyzeRoute: async (startLat: number, startLng: number, endLat: number, endLng: number): Promise<{
+    route: {
+      start: { lat: number; lng: number };
+      end: { lat: number; lng: number };
+      midpoint: { lat: number; lng: number };
+    };
+    safety: {
+      overallScore: number;
+      riskLevel: 'low' | 'medium' | 'high';
+      incidentsCount: number;
+      recommendations: string[];
+      alternativeRoutes?: string[];
+    };
+    recentIncidents: Array<{
+      type: string;
+      location: string;
+      time: string;
+      severity: 'low' | 'medium' | 'high';
+      description: string;
+    }>;
+    databaseIncidents: Alert[];
+    timeAnalysis: {
+      morning: { risk: string; score: number };
+      afternoon: { risk: string; score: number };
+      evening: { risk: string; score: number };
+      night: { risk: string; score: number };
+    };
+    userComments: Array<{
+      id?: number;
+      author: string;
+      comment: string;
+      rating: number;
+      timeAgo: string;
+      createdAt?: string;
+      sentiment: 'positive' | 'negative' | 'neutral';
+      suggests_alternative?: boolean;
+    }>;
+    aiConfidence: number;
+    source: string;
+  }> => {
+    console.log('API: analyzeRoute called with:', { startLat, startLng, endLat, endLng });
+    
+    try {
+      const response = await api.post('/community/route-analysis', {
+        startLat,
+        startLng,
+        endLat,
+        endLng
+      });
+      
+      console.log('API: analyzeRoute response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('API: analyzeRoute error:', error);
+      throw error;
+    }
+  },
+
+  // Create incident with location data
+  createIncident: async (data: {
+    title: string;
+    description: string;
+    location: string;
+    severity: 'low' | 'medium' | 'high';
+    reporter: string;
+    latitude?: number;
+    longitude?: number;
+    category?: string;
+  }): Promise<Alert> => {
+    const response = await api.post('/community/incidents', data);
+    return response.data;
+  },
+
+  // Post a comment about a route
+  postRouteComment: async (data: {
+    startLat: number;
+    startLng: number;
+    endLat: number;
+    endLng: number;
+    author: string;
+    comment: string;
+    rating: number;
+  }): Promise<{
+    id: number;
+    author: string;
+    comment: string;
+    rating: number;
+    timeAgo: string;
+    createdAt: string;
+    sentiment: 'positive' | 'negative' | 'neutral';
+  }> => {
+    const response = await api.post('/community/route-comments', data);
     return response.data;
   },
 };

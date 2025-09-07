@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Route Analysis Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .success { color: green; }
+        .error { color: red; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        input { padding: 8px; margin: 5px; width: 200px; }
+        .result { background: #f5f5f5; padding: 10px; margin: 10px 0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Route Analysis Test</h1>
+    
+    <div class="test-section">
+        <h3>Test Route Analysis API</h3>
+        <button onclick="testRouteAnalysis()">Test Route Analysis</button>
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        async function testRouteAnalysis() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing route analysis...';
+            
+            try {
+                const response = await fetch('http://localhost:8003/community/route-analysis', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        startLat: 13.0836939,
+                        startLng: 80.270186,
+                        endLat: 13.0827,
+                        endLng: 80.2707
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                resultDiv.innerHTML = `
+                    <div class="success">✅ Route Analysis Successful!</div>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">❌ Route Analysis Failed</div>
+                    <div>Error: ${error.message}</div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

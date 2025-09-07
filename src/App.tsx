@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Navigation from "./components/Navigation";
 import Login from "./pages/Login";
 import Community from "./pages/Community";
+import DiscussionDetail from "./pages/DiscussionDetail";
+import LocationIncidentPage from "./pages/LocationIncidentPage";
 import MapPage from "./pages/MapPage";
 import Heatmap from "./pages/Heatmap";
 import NotFound from "./pages/NotFound";
@@ -29,6 +31,8 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Login />} />
             <Route path="/community" element={<Community />} />
+            <Route path="/community/discussion/:id" element={<DiscussionDetail />} />
+            <Route path="/community/location-incidents" element={<LocationIncidentPage />} />
             <Route path="/map" element={<MapPage />} />
             <Route path="/heatmap" element={<Heatmap />} />
             <Route path="/api-test" element={<APITest />} />

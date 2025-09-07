@@ -120,59 +120,59 @@ if 'crime_count_6mo' in df.columns:
     print(f"📊 Features shape: {X.shape}")
     print(f"📊 Target shape: {y.shape}")
 
-# Split data into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    # Split data into training and testing sets
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
     print(f"✅ Training set shape: {X_train.shape}")
     print(f"✅ Testing set shape: {X_test.shape}")
-    
+
     # Linear Regression Model
     print("\n📈 Training Linear Regression Model...")
     lr_model = LinearRegression()
     lr_model.fit(X_train, y_train)
-    
+
     # Make predictions
     y_pred = lr_model.predict(X_test)
 
-# Evaluate the model
-mse = mean_squared_error(y_test, y_pred)
+    # Evaluate the model
+    mse = mean_squared_error(y_test, y_pred)
     rmse = np.sqrt(mse)
-r2 = r2_score(y_test, y_pred)
-mae = mean_absolute_error(y_test, y_pred)
+    r2 = r2_score(y_test, y_pred)
+    mae = mean_absolute_error(y_test, y_pred)
 
     print(f"📊 Linear Regression Results:")
     print(f"   Mean Squared Error (MSE): {mse:.4f}")
     print(f"   Root Mean Squared Error (RMSE): {rmse:.4f}")
     print(f"   R-squared (R2): {r2:.4f}")
     print(f"   Mean Absolute Error (MAE): {mae:.4f}")
-    
+
     # Random Forest Regressor
     print("\n🌲 Training Random Forest Regressor...")
     rf_regressor = RandomForestRegressor(n_estimators=100, random_state=42)
     rf_regressor.fit(X_train, y_train)
-    
+
     y_pred_rf = rf_regressor.predict(X_test)
-    
+
     mse_rf = mean_squared_error(y_test, y_pred_rf)
     rmse_rf = np.sqrt(mse_rf)
     r2_rf = r2_score(y_test, y_pred_rf)
     mae_rf = mean_absolute_error(y_test, y_pred_rf)
-    
+
     print(f"📊 Random Forest Regressor Results:")
     print(f"   Mean Squared Error (MSE): {mse_rf:.4f}")
     print(f"   Root Mean Squared Error (RMSE): {rmse_rf:.4f}")
     print(f"   R-squared (R2): {r2_rf:.4f}")
     print(f"   Mean Absolute Error (MAE): {mae_rf:.4f}")
-    
+
     # Feature Importance
     print("\n🎯 Feature Importance (Random Forest):")
     feature_importance = pd.DataFrame({
         'feature': X.columns,
         'importance': rf_regressor.feature_importances_
     }).sort_values('importance', ascending=False)
-    
+
     print(feature_importance.head(10))
-    
+
 else:
     print("❌ Target column 'crime_count_6mo' not found!")
     print(f"Available columns: {list(df.columns)}")

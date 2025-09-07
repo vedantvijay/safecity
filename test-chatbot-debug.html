@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot Debug Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+        .test-section {
+            background-color: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        .test-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            background-color: #333;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+        }
+        .error {
+            border-left-color: #dc3545;
+            background-color: #2d1b1b;
+        }
+        .success {
+            border-left-color: #28a745;
+            background-color: #1b2d1b;
+        }
+    </style>
+</head>
+<body>
+    <h1>🤖 SafeCity Chatbot Debug Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Cases</h2>
+        <p>Click the buttons below to test different chatbot scenarios:</p>
+        
+        <button class="test-button" onclick="testHospitalRoute()">Test Hospital Route</button>
+        <button class="test-button" onclick="testPoliceRoute()">Test Police Route</button>
+        <button class="test-button" onclick="testSafeRoute()">Test Safe Route</button>
+        <button class="test-button" onclick="testSchoolRoute()">Test School Route</button>
+        <button class="test-button" onclick="testGeneralRoute()">Test General Route</button>
+        
+        <div id="results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Manual Test</h2>
+        <input type="text" id="manualInput" placeholder="Type your message here..." style="width: 70%; padding: 10px; margin-right: 10px;">
+        <button class="test-button" onclick="testManual()">Send</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Console Logs</h2>
+        <div id="consoleLogs" style="background-color: #000; padding: 10px; border-radius: 4px; font-family: monospace; max-height: 300px; overflow-y: auto;"></div>
+    </div>
+
+    <script>
+        // Capture console logs
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+        
+        function addToConsoleLogs(message, type = 'log') {
+            const logsDiv = document.getElementById('consoleLogs');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.style.color = type === 'error' ? '#ff6b6b' : type === 'warn' ? '#ffd93d' : '#ffffff';
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logsDiv.appendChild(logEntry);
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            addToConsoleLogs(args.join(' '), 'log');
+        };
+        
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            addToConsoleLogs(args.join(' '), 'error');
+        };
+        
+        console.warn = function(...args) {
+            originalWarn.apply(console, args);
+            addToConsoleLogs(args.join(' '), 'warn');
+        };
+
+        function addResult(message, type = 'info') {
+            const resultsDiv = document.getElementById('results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `result ${type}`;
+            resultDiv.innerHTML = `<strong>${type.toUpperCase()}:</strong> ${message}`;
+            resultsDiv.appendChild(resultDiv);
+        }
+
+        function testHospitalRoute() {
+            console.log('Testing hospital route suggestion...');
+            addResult('Testing: "suggest a route which has more hospitals"', 'info');
+            
+            // Simulate the chatbot logic
+            const query = "suggest a route which has more hospitals";
+            const isRouteQuery = query.toLowerCase().includes('route') || 
+                              query.toLowerCase().includes('hospitals') ||
+                              query.toLowerCase().includes('hospital') ||
+                              query.toLowerCase().includes('police') ||
+                              query.toLowerCase().includes('station') ||
+                              query.toLowerCase().includes('school') ||
+                              query.toLowerCase().includes('college') ||
+                              query.toLowerCase().includes('university') ||
+                              query.toLowerCase().includes('safe') ||
+                              query.toLowerCase().includes('safest') ||
+                              query.toLowerCase().includes('suggest') ||
+                              query.toLowerCase().includes('find');
+            
+            console.log('Query:', query);
+            console.log('isRouteQuery:', isRouteQuery);
+            console.log('Contains hospitals:', query.toLowerCase().includes('hospitals'));
+            console.log('Contains hospital:', query.toLowerCase().includes('hospital'));
+            
+            if (isRouteQuery) {
+                if (query.toLowerCase().includes('hospitals') || query.toLowerCase().includes('hospital')) {
+                    addResult('✅ Would trigger handleHospitalRouteSuggestion()', 'success');
+                } else {
+                    addResult('✅ Would trigger handleRouteSuggestion()', 'success');
+                }
+            } else {
+                addResult('❌ Would NOT trigger route suggestion', 'error');
+            }
+        }
+
+        function testPoliceRoute() {
+            console.log('Testing police route suggestion...');
+            addResult('Testing: "find routes with police stations"', 'info');
+            
+            const query = "find routes with police stations";
+            const isRouteQuery = query.toLowerCase().includes('route') || 
+                              query.toLowerCase().includes('hospitals') ||
+                              query.toLowerCase().includes('hospital') ||
+                              query.toLowerCase().includes('police') ||
+                              query.toLowerCase().includes('station') ||
+                              query.toLowerCase().includes('school') ||
+                              query.toLowerCase().includes('college') ||
+                              query.toLowerCase().includes('university') ||
+                              query.toLowerCase().includes('safe') ||
+                              query.toLowerCase().includes('safest') ||
+                              query.toLowerCase().includes('suggest') ||
+                              query.toLowerCase().includes('find');
+            
+            console.log('Query:', query);
+            console.log('isRouteQuery:', isRouteQuery);
+            
+            if (isRouteQuery) {
+                if (query.toLowerCase().includes('police') || query.toLowerCase().includes('station')) {
+                    addResult('✅ Would trigger handlePoliceStationRouteSuggestion()', 'success');
+                } else {
+                    addResult('✅ Would trigger handleRouteSuggestion()', 'success');
+                }
+            } else {
+                addResult('❌ Would NOT trigger route suggestion', 'error');
+            }
+        }
+
+        function testSafeRoute() {
+            console.log('Testing safe route suggestion...');
+            addResult('Testing: "suggest safe routes"', 'info');
+            
+            const query = "suggest safe routes";
+            const isRouteQuery = query.toLowerCase().includes('route') || 
+                              query.toLowerCase().includes('hospitals') ||
+                              query.toLowerCase().includes('hospital') ||
+                              query.toLowerCase().includes('police') ||
+                              query.toLowerCase().includes('station') ||
+                              query.toLowerCase().includes('school') ||
+                              query.toLowerCase().includes('college') ||
+                              query.toLowerCase().includes('university') ||
+                              query.toLowerCase().includes('safe') ||
+                              query.toLowerCase().includes('safest') ||
+                              query.toLowerCase().includes('suggest') ||
+                              query.toLowerCase().includes('find');
+            
+            console.log('Query:', query);
+            console.log('isRouteQuery:', isRouteQuery);
+            
+            if (isRouteQuery) {
+                if (query.toLowerCase().includes('safe') || query.toLowerCase().includes('safest')) {
+                    addResult('✅ Would trigger handleSafeRouteSuggestion()', 'success');
+                } else {
+                    addResult('✅ Would trigger handleRouteSuggestion()', 'success');
+                }
+            } else {
+                addResult('❌ Would NOT trigger route suggestion', 'error');
+            }
+        }
+
+        function testSchoolRoute() {
+            console.log('Testing school route suggestion...');
+            addResult('Testing: "routes with schools"', 'info');
+            
+            const query = "routes with schools";
+            const isRouteQuery = query.toLowerCase().includes('route') || 
+                              query.toLowerCase().includes('hospitals') ||
+                              query.toLowerCase().includes('hospital') ||
+                              query.toLowerCase().includes('police') ||
+                              query.toLowerCase().includes('station') ||
+                              query.toLowerCase().includes('school') ||
+                              query.toLowerCase().includes('college') ||
+                              query.toLowerCase().includes('university') ||
+                              query.toLowerCase().includes('safe') ||
+                              query.toLowerCase().includes('safest') ||
+                              query.toLowerCase().includes('suggest') ||
+                              query.toLowerCase().includes('find');
+            
+            console.log('Query:', query);
+            console.log('isRouteQuery:', isRouteQuery);
+            
+            if (isRouteQuery) {
+                if (query.toLowerCase().includes('school') || query.toLowerCase().includes('college') || query.toLowerCase().includes('university')) {
+                    addResult('✅ Would trigger handleEducationalRouteSuggestion()', 'success');
+                } else {
+                    addResult('✅ Would trigger handleRouteSuggestion()', 'success');
+                }
+            } else {
+                addResult('❌ Would NOT trigger route suggestion', 'error');
+            }
+        }
+
+        function testGeneralRoute() {
+            console.log('Testing general route suggestion...');
+            addResult('Testing: "how to get there"', 'info');
+            
+            const query = "how to get there";
+            const isRouteQuery = query.toLowerCase().includes('route') || 
+                              query.toLowerCase().includes('hospitals') ||
+                              query.toLowerCase().includes('hospital') ||
+                              query.toLowerCase().includes('police') ||
+                              query.toLowerCase().includes('station') ||
+                              query.toLowerCase().includes('school') ||
+                              query.toLowerCase().includes('college') ||
+                              query.toLowerCase().includes('university') ||
+                              query.toLowerCase().includes('safe') ||
+                              query.toLowerCase().includes('safest') ||
+                              query.toLowerCase().includes('suggest') ||
+                              query.toLowerCase().includes('find');
+            
+            console.log('Query:', query);
+            console.log('isRouteQuery:', isRouteQuery);
+            
+            if (isRouteQuery) {
+                addResult('✅ Would trigger handleRouteSuggestion()', 'success');
+            } else {
+                addResult('❌ Would NOT trigger route suggestion', 'error');
+            }
+        }
+
+        function testManual() {
+            const input = document.getElementById('manualInput').value;
+            if (!input.trim()) {
+                addResult('Please enter a message to test', 'error');
+                return;
+            }
+            
+            console.log('Manual test:', input);
+            addResult(`Testing: "${input}"`, 'info');
+            
+            const isRouteQuery = input.toLowerCase().includes('route') || 
+                              input.toLowerCase().includes('hospitals') ||
+                              input.toLowerCase().includes('hospital') ||
+                              input.toLowerCase().includes('police') ||
+                              input.toLowerCase().includes('station') ||
+                              input.toLowerCase().includes('school') ||
+                              input.toLowerCase().includes('college') ||
+                              input.toLowerCase().includes('university') ||
+                              input.toLowerCase().includes('safe') ||
+                              input.toLowerCase().includes('safest') ||
+                              input.toLowerCase().includes('suggest') ||
+                              input.toLowerCase().includes('find');
+            
+            console.log('isRouteQuery:', isRouteQuery);
+            
+            if (isRouteQuery) {
+                addResult('✅ Would trigger route suggestion handler', 'success');
+            } else {
+                addResult('❌ Would NOT trigger route suggestion', 'error');
+            }
+            
+            document.getElementById('manualInput').value = '';
+        }
+
+        // Test on page load
+        console.log('Chatbot Debug Test Page Loaded');
+        addResult('Page loaded successfully. Click test buttons to verify chatbot logic.', 'info');
+    </script>
+</body>
+</html>

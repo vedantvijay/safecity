@@ -51,6 +51,26 @@ const MapPage = () => {
     setRouteRequest(routePreferences);
   };
 
+  const handleAddSuggestedRoute = (route: {
+    name: string;
+    start: { lat: number; lng: number; address?: string };
+    destination: { lat: number; lng: number; address?: string };
+    type: string;
+    safetyScore: number;
+    description: string;
+  }) => {
+    console.log("Adding suggested route to map:", route);
+    
+    // Update map locations to show the suggested route
+    setMapLocations({
+      start: route.start,
+      destination: route.destination
+    });
+    
+    // You can also add the route to a list of suggested routes if needed
+    // For now, we'll just update the map locations to show the route
+  };
+
   return (
     <div className="h-screen bg-background">
       <div className="h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -108,6 +128,7 @@ const MapPage = () => {
                 mapLocations={mapLocations} 
                 onRouteRequest={handleRouteRequest}
                 routeTypes={routeTypes}
+                onAddSuggestedRoute={handleAddSuggestedRoute}
               />
             </div>
           </div>

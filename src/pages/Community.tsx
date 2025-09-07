@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -12,11 +12,15 @@ import {
   Bell,
   Plus,
   RefreshCw,
-  AlertCircle
+  AlertCircle,
+  Navigation,
+  Settings
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { communityApi, CommunityStats, Alert, Discussion } from "@/api/community";
@@ -25,10 +29,76 @@ import DiscussionCard from "@/components/DiscussionCard";
 import CreateDiscussionModal from "@/components/CreateDiscussionModal";
 import LocationAlerts from "@/components/LocationAlerts";
 
+interface UserLocation {
+  lat: number;
+  lng: number;
+  name?: string;
+}
+
 const Community = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
+  const [manualLocation, setManualLocation] = useState<string>('');
+  const [showLocationSettings, setShowLocationSettings] = useState(false);
+
+  // Get user location on component mount
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+            name: 'Current Location'
+          });
+        },
+        (error) => {
+          console.error('Geolocation error:', error);
+          toast.error('Unable to get your location. You can set it manually.');
+        }
+      );
+    }
+  }, []);
+
+  // Function to geocode city name to coordinates
+  const geocodeCity = async (cityName: string): Promise<UserLocation | null> => {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cityName)}&limit=1&countrycodes=in`
+      );
+      const data = await response.json();
+      
+      if (data && data.length > 0) {
+        return {
+          lat: parseFloat(data[0].lat),
+          lng: parseFloat(data[0].lon),
+          name: data[0].display_name.split(',')[0]
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error('Geocoding error:', error);
+      return null;
+    }
+  };
+
+  const handleSetManualLocation = async () => {
+    if (!manualLocation.trim()) {
+      toast.error('Please enter a city name');
+      return;
+    }
+
+    const coords = await geocodeCity(manualLocation.trim());
+    if (coords) {
+      setUserLocation(coords);
+      setShowLocationSettings(false);
+      toast.success(`Location set to ${coords.name}`);
+    } else {
+      toast.error('City not found. Please try a different name.');
+    }
+  };
 
   // Fetch community stats
   const { data: stats, isLoading: statsLoading, error: statsError } = useQuery({
@@ -39,13 +109,24 @@ const Community = () => {
     staleTime: 30000, // Consider data stale after 30 seconds
   });
 
-  // Fetch alerts with auto-refresh
+  // Fetch location-based alerts
   const { data: alerts, isLoading: alertsLoading, error: alertsError } = useQuery({
-    queryKey: ['community-alerts'],
-    queryFn: communityApi.getAlerts,
+    queryKey: ['community-alerts', userLocation?.lat, userLocation?.lng],
+    queryFn: () => userLocation ? communityApi.getLocationAlerts(userLocation.lat, userLocation.lng, 10) : communityApi.getAlerts(),
     refetchInterval: 30000, // Refetch every 30 seconds
     retry: 1, // Only retry once
     staleTime: 15000, // Consider data stale after 15 seconds
+    enabled: true, // Always enabled, falls back to general alerts if no location
+  });
+
+  // Fetch AI analysis for location
+  const { data: aiAnalysis, isLoading: analysisLoading } = useQuery({
+    queryKey: ['ai-analysis', userLocation?.lat, userLocation?.lng],
+    queryFn: () => userLocation ? communityApi.getAICrimeAnalysis(userLocation.lat, userLocation.lng, 10) : Promise.resolve(null),
+    refetchInterval: 60000, // Refetch every minute
+    retry: 1,
+    staleTime: 30000,
+    enabled: !!userLocation,
   });
 
   // Fetch discussions
@@ -87,7 +168,7 @@ const Community = () => {
   };
 
   // Loading state
-  const isLoading = statsLoading || alertsLoading || discussionsLoading;
+  const isLoading = statsLoading || alertsLoading || discussionsLoading || analysisLoading;
 
   return (
     <div className="min-h-screen bg-background">
@@ -106,16 +187,69 @@ const Community = () => {
             <p className="text-muted-foreground max-w-2xl mx-auto">
               Stay connected with your neighborhood and stay informed about safety updates and community discussions.
             </p>
-            <div className="mt-4">
-              <Button
-                variant="outline"
-                onClick={handleRefresh}
-                disabled={isLoading}
-                className="flex items-center space-x-2"
-              >
-                <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-                <span>Refresh Data</span>
-              </Button>
+            
+            {/* Location Settings */}
+            <div className="mt-4 flex flex-col items-center space-y-3">
+              <div className="flex items-center space-x-2">
+                <MapPin className="h-4 w-4 text-blue-500" />
+                <span className="text-sm text-muted-foreground">
+                  {userLocation ? `📍 ${userLocation.name}` : '📍 Location not set'}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowLocationSettings(!showLocationSettings)}
+                  className="flex items-center space-x-1"
+                >
+                  <Settings className="h-3 w-3" />
+                  <span>Settings</span>
+                </Button>
+              </div>
+              
+              {showLocationSettings && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="flex items-center space-x-2 p-3 bg-muted/30 rounded-lg border border-border"
+                >
+                  <Label htmlFor="location-input" className="text-sm">Set Location:</Label>
+                  <Input
+                    id="location-input"
+                    placeholder="Enter city name (e.g., Chennai, Delhi)"
+                    value={manualLocation}
+                    onChange={(e) => setManualLocation(e.target.value)}
+                    className="w-48"
+                  />
+                  <Button
+                    size="sm"
+                    onClick={handleSetManualLocation}
+                    disabled={!manualLocation.trim()}
+                  >
+                    Set
+                  </Button>
+                </motion.div>
+              )}
+              
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  onClick={handleRefresh}
+                  disabled={isLoading}
+                  className="flex items-center space-x-2"
+                >
+                  <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                  <span>Refresh Data</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => navigate('/community/location-incidents')}
+                  className="flex items-center space-x-2"
+                >
+                  <Navigation className="h-4 w-4" />
+                  <span>Route Analysis</span>
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -244,8 +378,58 @@ const Community = () => {
             </Card>
           </div>
 
-                 {/* Location-Based Alerts */}
-                 <LocationAlerts />
+          {/* AI Analysis Summary */}
+          {aiAnalysis && (
+            <Card className="community-card">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Shield className="h-6 w-6 text-blue-500" />
+                  <span>AI Safety Analysis</span>
+                  <Badge variant="outline" className="ml-auto">
+                    {aiAnalysis.summary.riskLevel.toUpperCase()}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-foreground">
+                      {aiAnalysis.summary.totalCrimes}
+                    </div>
+                    <div className="text-sm text-muted-foreground">Total Incidents</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-foreground">
+                      {aiAnalysis.summary.riskScore}/100
+                    </div>
+                    <div className="text-sm text-muted-foreground">Risk Score</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-foreground">
+                      {aiAnalysis.summary.aiConfidence || 85}%
+                    </div>
+                    <div className="text-sm text-muted-foreground">AI Confidence</div>
+                  </div>
+                </div>
+                {aiAnalysis.summary.safetyRecommendations && aiAnalysis.summary.safetyRecommendations.length > 0 && (
+                  <div className="mt-4">
+                    <h4 className="font-semibold mb-2">Safety Recommendations:</h4>
+                    <ul className="space-y-1">
+                      {aiAnalysis.summary.safetyRecommendations.slice(0, 3).map((rec: string, index: number) => (
+                        <li key={index} className="text-sm text-muted-foreground flex items-start">
+                          <span className="text-blue-500 mr-2">•</span>
+                          {rec}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Location-Based Alerts */}
+          <LocationAlerts />
 
           {/* Main Content Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -345,8 +529,12 @@ const Community = () => {
                     <p>No alerts at the moment</p>
                   </div>
                 )}
-                <Button variant="outline" className="w-full">
-                  View All Alerts
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => navigate('/community/location-incidents')}
+                >
+                  View Location-Based Incidents
                 </Button>
               </CardContent>
             </Card>
@@ -470,7 +658,11 @@ const Community = () => {
                     </Button>
                   </div>
                 )}
-                <Button variant="outline" className="w-full">
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => navigate('/community/location-incidents')}
+                >
                   View All Discussions
                 </Button>
               </CardContent>

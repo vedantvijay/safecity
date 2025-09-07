@@ -1,13 +1,19 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { GoogleMap, LoadScript, HeatmapLayer } from '@react-google-maps/api';
+import { GoogleMap, LoadScript, HeatmapLayer, Marker } from '@react-google-maps/api';
 import Papa from 'papaparse';
-import { Shield, MapPin, AlertTriangle, Eye, EyeOff } from 'lucide-react';
+import { Shield, MapPin, AlertTriangle, Eye, EyeOff, Navigation, Locate } from 'lucide-react';
 
 // TypeScript interfaces for strong typing
 interface ParsedCrimeData {
   lat: number;
   lng: number;
   weight: number;
+}
+
+interface UserLocation {
+  lat: number;
+  lng: number;
+  accuracy?: number;
 }
 
 // Map configuration
@@ -91,6 +97,10 @@ const HeatmapPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const [mapCenter, setMapCenter] = useState(chennaiCenter);
 
   // Filter out points over water/outside Chennai land area
   const isOnLand = useCallback((lat: number, lng: number): boolean => {
@@ -252,6 +262,53 @@ const HeatmapPage: React.FC = () => {
     }
   }, [generateFallbackData]);
 
+  // Get user's current location
+  const getUserLocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      setLocationError('Geolocation is not supported by this browser');
+      return;
+    }
+
+    setIsGettingLocation(true);
+    setLocationError(null);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const location: UserLocation = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+          accuracy: position.coords.accuracy
+        };
+        setUserLocation(location);
+        setMapCenter(location);
+        setIsGettingLocation(false);
+        console.log('User location obtained:', location);
+      },
+      (error) => {
+        let errorMessage = 'Unable to retrieve your location';
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = 'Location access denied by user';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = 'Location information is unavailable';
+            break;
+          case error.TIMEOUT:
+            errorMessage = 'Location request timed out';
+            break;
+        }
+        setLocationError(errorMessage);
+        setIsGettingLocation(false);
+        console.error('Geolocation error:', error);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 300000 // 5 minutes
+      }
+    );
+  }, []);
+
   // Load data on component mount
   useEffect(() => {
     loadCrimeData();
@@ -312,28 +369,64 @@ const HeatmapPage: React.FC = () => {
               </div>
             </div>
             
-            {/* Toggle Button */}
-            <button
-              onClick={toggleHeatmap}
-              disabled={isLoading || !isLoaded}
-              className={`px-6 py-3 rounded-lg shadow-lg transition-all duration-200 flex items-center space-x-2 ${
-                showHeatmap 
-                  ? "bg-orange-500 text-white hover:bg-orange-600" 
-                  : "bg-card text-card-foreground hover:bg-muted border border-border"
-              } ${isLoading || !isLoaded ? "opacity-50 cursor-not-allowed" : ""}`}
-            >
-              {showHeatmap ? (
-                <EyeOff className="h-5 w-5" />
-              ) : (
-                <Eye className="h-5 w-5" />
-              )}
-              <span className="font-medium">
-                {showHeatmap ? "Hide Safety Heatmap" : "Show Safety Heatmap"}
-              </span>
-            </button>
+            {/* Control Buttons */}
+            <div className="flex items-center space-x-3">
+              {/* Location Button */}
+              <button
+                onClick={getUserLocation}
+                disabled={isGettingLocation}
+                className={`px-4 py-3 rounded-lg shadow-lg transition-all duration-200 flex items-center space-x-2 ${
+                  userLocation 
+                    ? "bg-blue-500 text-white hover:bg-blue-600" 
+                    : "bg-card text-card-foreground hover:bg-muted border border-border"
+                } ${isGettingLocation ? "opacity-50 cursor-not-allowed" : ""}`}
+                title={userLocation ? "Center on your location" : "Get your current location"}
+              >
+                {isGettingLocation ? (
+                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-current border-t-transparent" />
+                ) : (
+                  <Locate className="h-5 w-5" />
+                )}
+                <span className="font-medium">
+                  {userLocation ? "My Location" : "Get Location"}
+                </span>
+              </button>
+
+              {/* Toggle Button */}
+              <button
+                onClick={toggleHeatmap}
+                disabled={isLoading || !isLoaded}
+                className={`px-6 py-3 rounded-lg shadow-lg transition-all duration-200 flex items-center space-x-2 ${
+                  showHeatmap 
+                    ? "bg-orange-500 text-white hover:bg-orange-600" 
+                    : "bg-card text-card-foreground hover:bg-muted border border-border"
+                } ${isLoading || !isLoaded ? "opacity-50 cursor-not-allowed" : ""}`}
+              >
+                {showHeatmap ? (
+                  <EyeOff className="h-5 w-5" />
+                ) : (
+                  <Eye className="h-5 w-5" />
+                )}
+                <span className="font-medium">
+                  {showHeatmap ? "Hide Safety Heatmap" : "Show Safety Heatmap"}
+                </span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
+
+        {/* Location Error */}
+        {locationError && (
+          <div className="bg-red-100 border border-red-400 text-red-800 px-4 py-3 mb-4">
+            <div className="flex items-center space-x-2">
+              <AlertTriangle className="h-5 w-5" />
+              <div>
+                <strong>Location Error:</strong> {locationError}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Debug Info */}
         <div className="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 mb-4">
@@ -344,6 +437,8 @@ const HeatmapPage: React.FC = () => {
             Map Loaded: {isLoaded ? 'Yes' : 'No'}<br/>
             Show Heatmap: {showHeatmap ? 'Yes' : 'No'}<br/>
             Heatmap Data: {heatmapData.length} points<br/>
+            User Location: {userLocation ? `${userLocation.lat.toFixed(4)}, ${userLocation.lng.toFixed(4)}` : 'None'}<br/>
+            Map Center: {mapCenter.lat.toFixed(4)}, {mapCenter.lng.toFixed(4)}<br/>
             Google Maps Available: {typeof google !== 'undefined' ? 'Yes' : 'No'}<br/>
             Google Maps API: {typeof google !== 'undefined' && google.maps ? 'Yes' : 'No'}<br/>
             Sample Data: {crimeData.length > 0 ? `${crimeData[0].lat}, ${crimeData[0].lng} (weight: ${crimeData[0].weight})` : 'None'}<br/>
@@ -434,8 +529,8 @@ const HeatmapPage: React.FC = () => {
           >
             <GoogleMap
               mapContainerStyle={mapContainerStyle}
-              center={chennaiCenter}
-              zoom={12}
+              center={mapCenter}
+              zoom={userLocation ? 15 : 12}
               onLoad={onMapLoad}
               options={mapOptions}
             >
@@ -461,6 +556,26 @@ const HeatmapPage: React.FC = () => {
                   />
                 </>
               )}
+
+              {/* User Location Marker */}
+              {isLoaded && userLocation && (
+                <Marker
+                  position={userLocation}
+                  icon={{
+                    url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="8" fill="#4285F4" stroke="#FFFFFF" stroke-width="2"/>
+                        <circle cx="12" cy="12" r="3" fill="#FFFFFF"/>
+                        <circle cx="12" cy="12" r="1" fill="#4285F4"/>
+                      </svg>
+                    `),
+                    scaledSize: new google.maps.Size(24, 24),
+                    anchor: new google.maps.Point(12, 12)
+                  }}
+                  title="Your Location"
+                  animation={google.maps.Animation.DROP}
+                />
+              )}
             </GoogleMap>
           </LoadScript>
 
@@ -473,9 +588,15 @@ const HeatmapPage: React.FC = () => {
                   Chennai Crime Data
                 </h3>
                 <div className="text-xs text-muted-foreground space-y-1">
-                  <div>📍 Center: Chennai (13.0827, 80.2707)</div>
+                  <div>📍 Center: {mapCenter.lat.toFixed(4)}, {mapCenter.lng.toFixed(4)}</div>
                   <div>📊 Points: {crimeData.length}</div>
                   <div>🎯 Status: {showHeatmap ? 'Active' : 'Hidden'}</div>
+                  {userLocation && (
+                    <div className="flex items-center space-x-1">
+                      <Navigation className="h-3 w-3 text-blue-500" />
+                      <span>Your Location: {userLocation.lat.toFixed(4)}, {userLocation.lng.toFixed(4)}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
