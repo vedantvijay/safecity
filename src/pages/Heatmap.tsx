@@ -424,7 +424,7 @@ const HeatmapPage: React.FC = () => {
       {!isLoading && crimeData.length > 0 && (
         <div className="relative h-[calc(100vh-200px)] min-h-[500px]">
           <LoadScript
-            googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "AIzaSyCS9FOUebt88LT6W7uTjd2u9d6LgpRpkJs"}
+            googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ""}
             libraries={libraries}
             onLoad={() => console.log('Google Maps API loaded')}
             onError={(error) => {
