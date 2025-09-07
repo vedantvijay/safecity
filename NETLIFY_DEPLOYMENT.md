@@ -10,11 +10,11 @@
 2. Add these variables:
 
 ```
-VITE_GOOGLE_MAPS_API_KEY = AIzaSyCS9FOUebt88LT6W7uTjd2u9d6LgpRpkJs
-VITE_OPENAI_API_KEY = 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
-VITE_EMAILJS_SERVICE_ID = service_vqddhdh
-VITE_EMAILJS_TEMPLATE_ID = template_duu0sn8
-VITE_EMAILJS_PUBLIC_KEY = l3-oi62WmJ-1hLHlo
+VITE_GOOGLE_MAPS_API_KEY = your_google_maps_api_key_here
+VITE_OPENAI_API_KEY = your_openai_api_key_here
+VITE_EMAILJS_SERVICE_ID = your_emailjs_service_id_here
+VITE_EMAILJS_TEMPLATE_ID = your_emailjs_template_id_here
+VITE_EMAILJS_PUBLIC_KEY = your_emailjs_public_key_here
 ```
 
 ### 2. Build Settings
