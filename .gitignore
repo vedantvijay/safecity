@@ -18,6 +18,18 @@ dist-ssr
 .env.production
 .env.development
 
+# Python
+backend/__pycache__/
+backend/*.pyc
+backend/*.pyo
+backend/*.db
+backend/venv/
+backend/.pytest_cache/
+
+# ML Models (large files)
+backend/models_high_accuracy/
+backend/models_improved/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

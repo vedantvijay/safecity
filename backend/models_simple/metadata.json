@@ -1,0 +1,11 @@
+{
+  "regression": {
+    "r2": 0.7390312056133402,
+    "rmse": 73.58608476916544,
+    "mae": 47.35403024889103
+  },
+  "classification": {
+    "accuracy": 0.847
+  },
+  "feature_count": 12
+}
