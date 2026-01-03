@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { AlertTriangle, Phone, Settings, User, Mail } from "lucide-react";
-import { toast } from "sonner";
 import { emailService } from "@/services/emailService";
+import { motion } from "framer-motion";
+import { AlertTriangle, Mail, Phone, Settings, User } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 interface EmergencyContact {
   name: string;
@@ -14,13 +14,13 @@ const SOSButton = () => {
   const [isPressed, setIsPressed] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [userInfo, setUserInfo] = useState({
-    name: "SafeCity User",
-    email: "snehasachan3107@gmail.com"
+    name: "Your Name Here",
+    email: "your-email@example.com"
   });
   const [emergencyContacts, setEmergencyContacts] = useState<EmergencyContact[]>([
     {
-      name: "Sneha Sachan",
-      email: "snehasachan3107@gmail.com",
+      name: "balaji.s",
+      email: "kingbalaji4254@gmail.com",
       relationship: "Emergency Contact"
     },
     {

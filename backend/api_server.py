@@ -3,15 +3,15 @@
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from simple_high_accuracy_model import SimpleCrimeModel
+from ml_model import ChennaiCrimeMLModel
 import json
 import os
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for React frontend
 
-# Initialize the SIMPLE HIGH-ACCURACY ML model
-model = SimpleCrimeModel()
+# Initialize the Chennai Crime ML model
+model = ChennaiCrimeMLModel()
 
 @app.route('/api/predict-crime', methods=['POST'])
 def predict_crime():
@@ -149,18 +149,15 @@ def model_info():
     })
 
 if __name__ == '__main__':
-    # Load the SIMPLE HIGH-ACCURACY model on startup
-    print("🤖 Loading Simple High-Accuracy Model...")
+    # Load the Chennai Crime ML model on startup
+    print("🤖 Loading Chennai Crime ML Model...")
     if model.load_models():
         print("✅ Model loaded!")
-        if model.model_metadata:
-            print(f"📊 Performance:")
-            print(f"   Accuracy: {model.model_metadata['classification']['accuracy']*100:.2f}%")
-            print(f"   R²: {model.model_metadata['regression']['r2']:.4f}")
     else:
         print("❌ Model not found. Training now...")
+        import sys
         import subprocess
-        subprocess.run([sys.executable, 'simple_high_accuracy_model.py'])
+        subprocess.run([sys.executable, 'ml_model.py'])
         if not model.load_models():
             print("❌ Failed!")
             exit(1)
